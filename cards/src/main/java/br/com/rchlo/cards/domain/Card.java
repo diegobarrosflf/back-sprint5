@@ -50,4 +50,8 @@ public class Card {
     public Customer getCustomer() {
         return customer;
     }
+
+    public void updateLimit(BigDecimal amount) {
+        this.availableLimit = this.availableLimit.subtract(amount);
+    }
 }

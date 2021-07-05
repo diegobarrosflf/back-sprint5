@@ -129,8 +129,9 @@ public class TransactionController {
 
         // atualiza limite do cartao
         Card card = transaction.getCard();
-        BigDecimal newCardLimit = card.getAvailableLimit().subtract(transaction.getAmount());
-        card.setAvailableLimit(newCardLimit);
+        var amount = transaction.getAmount();
+        card.updateLimit(amount);
+
 
         // inicio criacao texto de notificacao
         String notificationText = "";
