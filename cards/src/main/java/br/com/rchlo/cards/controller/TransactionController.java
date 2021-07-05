@@ -121,11 +121,8 @@ public class TransactionController {
                 .getResultStream().findFirst();
         Transaction transaction = possibleTransaction.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        if (!Transaction.Status.CREATED.equals(transaction.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid transaction status");
-        }
+        transaction.confirm();
 
-        transaction.setStatus(Transaction.Status.CONFIRMED);
 
         // atualiza limite do cartao
         Card card = transaction.getCard();
@@ -168,11 +165,8 @@ public class TransactionController {
                 .getResultStream().findFirst();
         Transaction transaction = possibleTransaction.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        if (!Transaction.Status.CREATED.equals(transaction.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid transaction status");
-        }
-
-        transaction.setStatus(Transaction.Status.CANCELED);
+        transaction.cancel();
         return ResponseEntity.ok().build();
     }
+
 }

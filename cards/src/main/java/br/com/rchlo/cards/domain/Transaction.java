@@ -1,5 +1,8 @@
 package br.com.rchlo.cards.domain;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -59,6 +62,20 @@ public class Transaction {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public void confirm() {
+        if (!Transaction.Status.CREATED.equals(this.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid transaction status");
+        }
+        this.setStatus(Transaction.Status.CONFIRMED);
+    }
+
+    public void cancel() {
+        if (!Transaction.Status.CREATED.equals(this.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid transaction status");
+        }
+            this.setStatus(Transaction.Status.CANCELED);
     }
 
     public enum Status {
