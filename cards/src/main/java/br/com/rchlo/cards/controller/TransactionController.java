@@ -1,10 +1,13 @@
 package br.com.rchlo.cards.controller;
 
 import br.com.rchlo.cards.domain.Card;
-import br.com.rchlo.cards.domain.FraudVerifier;
 import br.com.rchlo.cards.domain.Transaction;
 import br.com.rchlo.cards.dto.TransactionRequestDto;
 import br.com.rchlo.cards.dto.TransactionResponseDto;
+import br.com.rchlo.cards.repositories.CardRepository;
+import br.com.rchlo.cards.services.CardService;
+import br.com.rchlo.cards.services.FraudVerifierService;
+import br.com.rchlo.cards.services.TransactionService;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -17,17 +20,12 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.math.BigDecimal;
 import java.net.URI;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -37,11 +35,25 @@ public class TransactionController {
     private final EntityManager entityManager;
     private final Configuration freemarker;
     private final MailSender mailSender;
+    private final CardRepository cardRepository;
+    private final CardService cardService;
+    private final FraudVerifierService fraudVerifierService;
+    private final TransactionService transactionService;
 
-    public TransactionController(EntityManager entityManager, Configuration freemarker, MailSender mailSender) {
+    public TransactionController(EntityManager entityManager,
+                                 Configuration freemarker,
+                                 MailSender mailSender,
+                                 CardRepository cardRepository,
+                                 CardService cardService,
+                                 FraudVerifierService fraudVerifierService,
+                                 TransactionService transactionService) {
         this.entityManager = entityManager;
         this.freemarker = freemarker;
         this.mailSender = mailSender;
+        this.cardRepository = cardRepository;
+        this.cardService = cardService;
+        this.fraudVerifierService = fraudVerifierService;
+        this.transactionService = transactionService;
     }
 
     @GetMapping("/transactions/{uuid}")
@@ -55,59 +67,21 @@ public class TransactionController {
 
     @Transactional
     @PostMapping("/transactions")
-    public ResponseEntity<TransactionResponseDto> create(@RequestBody @Valid TransactionRequestDto transactionRequest, UriComponentsBuilder uriBuilder) {
+    public ResponseEntity<TransactionResponseDto> create(@RequestBody @Valid TransactionRequestDto transactionRequest,
+                                                         UriComponentsBuilder uriBuilder) {
 
-        // inicio validacao se card existe
-        Optional<Card> possibleCard = entityManager.createQuery("select c from Card c where c.number = :number " +
-                " and c.holderName = :name and c.expiration = :expiration and c.securityCode = :code", Card.class)
-                .setParameter("number", transactionRequest.getCardNumber())
-                .setParameter("name", transactionRequest.getCardHolderName())
-                .setParameter("expiration", transactionRequest.getCardExpiration().toString())
-                .setParameter("code", transactionRequest.getCardSecurityCode())
-                .getResultStream().findFirst();
-        Card card = possibleCard.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid card"));
-        // fim validacao se card existe
+        //recuperar o cartão do banco se não existir lança uma Exception
+        Card card = cardService.findByNumberNameExpirationAndCode(transactionRequest);
 
-        // inicio verificacao limite disponivel
-        if(transactionRequest.getAmount().compareTo(card.getAvailableLimit()) > 0 ) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Limit not available");
-        }
-        // fim verificacao limite disponivel
+        // verificacao limite disponivel
+        cardService.hasLimit(transactionRequest, card);
 
-        // inicio verificacao de fraude
-        List<FraudVerifier> enabledFraudVerifiers = entityManager.createQuery("select fv from FraudVerifier fv where fv.enabled = true", FraudVerifier.class)
-                .getResultList();
-
-        // fraude: gastar o limite de uma vez
-        if (enabledFraudVerifiers.stream().map(FraudVerifier::getType)
-                .anyMatch(FraudVerifier.Type.EXPENDS_ALL_LIMIT::equals)) {
-            if(transactionRequest.getAmount().compareTo(card.getAvailableLimit()) == 0 ) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fraud detected");
-            }
-        }
-
-        // fraude: duas transacoes com menos de 30 segundos
-        if (enabledFraudVerifiers.stream().map(FraudVerifier::getType)
-                .anyMatch(FraudVerifier.Type.TOO_FAST::equals)) {
-            LocalDateTime timeOfLastConfirmedTransactionForCard = null;
-            try {
-                timeOfLastConfirmedTransactionForCard = entityManager.createQuery("select max(t.createdAt) from Transaction  t where t.card = :card " +
-                        " and t.status = :status", LocalDateTime.class)
-                        .setParameter("card", card)
-                        .setParameter("status", Transaction.Status.CONFIRMED).getSingleResult();
-            } catch (NoResultException ex) { }
-            if (timeOfLastConfirmedTransactionForCard != null) {
-                long secondsFromLastConfirmedTransactionForCard = ChronoUnit.SECONDS.between(timeOfLastConfirmedTransactionForCard, LocalDateTime.now());
-                if (secondsFromLastConfirmedTransactionForCard < 30) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fraud detected");
-                }
-            }
-        }
-        // fim verificacao de fraude
+        // verificacao de fraude
+        fraudVerifierService.hasVerifiedFraud(transactionRequest, card);
 
         // salva transacao
         Transaction transaction = transactionRequest.asEntity(card);
-        entityManager.persist(transaction);
+        transactionService.save(transaction);
 
         URI uri = uriBuilder.path("/transactions/{uuid}").buildAndExpand(transaction.getUuid()).toUri();
         return ResponseEntity.created(uri).body(new TransactionResponseDto(transaction));
