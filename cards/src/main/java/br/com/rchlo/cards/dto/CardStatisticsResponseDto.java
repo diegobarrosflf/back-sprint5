@@ -8,26 +8,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class CardStatisticsResponseDto extends TreeMap<YearMonth, CardStatisticsItemResponseDto> {
+public class CardStatisticsResponseDto {
+
+    private Map<YearMonth, CardStatisticsItemResponseDto> map = new TreeMap<>();
 
     public void addItem(YearMonth yearMonth, List<Transaction> transactionsForYearMonth) {
-        DoubleSummaryStatistics transactionSummaryStatistics = transactionsForYearMonth.stream().mapToDouble(transaction -> transaction.getAmount().doubleValue()).summaryStatistics();
-        this.put(yearMonth, new CardStatisticsItemResponseDto(transactionSummaryStatistics));
-    }
+        DoubleSummaryStatistics transactionSummaryStatistics = transactionsForYearMonth
+                .stream()
+                .mapToDouble(transaction -> transaction.getAmount().doubleValue())
+                .summaryStatistics();
 
-    @Override
-    public CardStatisticsItemResponseDto remove(Object key) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void putAll(Map<? extends YearMonth, ? extends CardStatisticsItemResponseDto> m) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void clear() {
-        throw new UnsupportedOperationException();
+        map.put(yearMonth, new CardStatisticsItemResponseDto(transactionSummaryStatistics));
     }
 
 }
