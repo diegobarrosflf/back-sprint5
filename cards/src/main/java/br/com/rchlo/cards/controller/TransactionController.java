@@ -90,43 +90,21 @@ public class TransactionController {
     @Transactional
     @PutMapping("/transactions/{uuid}")
     public ResponseEntity<Void> confirm(@PathVariable("uuid") String uuid) {
-        Optional<Transaction> possibleTransaction = entityManager.createQuery("select t from Transaction t where t.uuid = :uuid", Transaction.class)
-                .setParameter("uuid", uuid)
-                .getResultStream().findFirst();
-        Transaction transaction = possibleTransaction.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        //recuperar a transação pelo id
+        var transaction = transactionService.findById(uuid);
 
         transaction.confirm();
 
-
         // atualiza limite do cartao
-        Card card = transaction.getCard();
-        var amount = transaction.getAmount();
-        card.updateLimit(amount);
-
+        cardService.updateLimit(transaction);
 
         // inicio criacao texto de notificacao
-        String notificationText = "";
-        try {
-            Template template = freemarker.getTemplate("expense-notification.ftl");
-            Map<String, Object> data = new HashMap<>();
-            data.put("transaction", transaction);
-            StringWriter out = new StringWriter();
-            template.process(data, out);
-            notificationText = out.toString();
-        } catch (IOException | TemplateException ex) {
-            throw new IllegalStateException(ex);
-        }
-        // fim criacao texto de notificacao
+        String notificationText = transactionService.creatNotification(transaction, freemarker);
+
 
         // inicio envio notificacao por email
-        var message = new SimpleMailMessage();
-        message.setFrom("noreply@rchlo.com.br");
-        message.setTo(card.getCustomer().getEmail());
-        message.setSubject("Nova despesa: " + transaction.getDescription());
-        message.setText(notificationText);
-        mailSender.send(message);   // para verificar o email enviado acesse: https://www.smtpbucket.com/emails.
-                                    // Coloque noreply@rchlo.com.br em Sender e o email do cliente no Recipient.
-        // fim envio notificacao por email
+        transactionService.sendNotification(mailSender, notificationText, transaction);
 
         return ResponseEntity.ok().build();
     }

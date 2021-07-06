@@ -21,10 +21,11 @@ public class FraudVerifierService {
 
     private final FraudVerifierRepository fraudVerifierRepository;
     private final List<FraudVerifier> enabledFraudVerifiers;
-    private TransactionRepository transactioRepository;
+    private final TransactionRepository transactioRepository;
 
 
-    public FraudVerifierService(FraudVerifierRepository fraudVerifierRepository, TransactionRepository transactioRepository) {
+    public FraudVerifierService(FraudVerifierRepository fraudVerifierRepository,
+                                TransactionRepository transactioRepository) {
         this.fraudVerifierRepository = fraudVerifierRepository;
         this.enabledFraudVerifiers = fraudVerifierRepository.findAllEnabledTrue();
         this.transactioRepository = transactioRepository;
@@ -35,7 +36,7 @@ public class FraudVerifierService {
         // fraude: gastar o limite de uma vez
         if (enabledFraudVerifiers.stream().map(FraudVerifier::getType)
                 .anyMatch(FraudVerifier.Type.EXPENDS_ALL_LIMIT::equals)) {
-            if(transactionRequest.getAmount().compareTo(card.getAvailableLimit()) == 0 ) {
+            if (transactionRequest.getAmount().compareTo(card.getAvailableLimit()) == 0) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fraud detected");
             }
         }
@@ -45,8 +46,11 @@ public class FraudVerifierService {
                 .anyMatch(FraudVerifier.Type.TOO_FAST::equals)) {
             LocalDateTime timeOfLastConfirmedTransactionForCard = null;
             try {
-                timeOfLastConfirmedTransactionForCard = transactioRepository.findTimeOfLastConfirmedTransactionForCard(card, Transaction.Status.CONFIRMED);
-            } catch (NoResultException ex) { }
+                timeOfLastConfirmedTransactionForCard =
+                        transactioRepository
+                                .findTimeOfLastConfirmedTransactionForCard(card, Transaction.Status.CONFIRMED);
+            } catch (NoResultException ex) {
+            }
             if (timeOfLastConfirmedTransactionForCard != null) {
                 long secondsFromLastConfirmedTransactionForCard = ChronoUnit.SECONDS.between(timeOfLastConfirmedTransactionForCard, LocalDateTime.now());
                 if (secondsFromLastConfirmedTransactionForCard < 30) {

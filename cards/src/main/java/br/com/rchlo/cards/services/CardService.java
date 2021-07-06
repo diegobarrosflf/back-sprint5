@@ -2,6 +2,7 @@ package br.com.rchlo.cards.services;
 
 import br.com.rchlo.cards.domain.Card;
 import br.com.rchlo.cards.domain.FraudVerifier;
+import br.com.rchlo.cards.domain.Transaction;
 import br.com.rchlo.cards.dto.TransactionRequestDto;
 import br.com.rchlo.cards.repositories.CardRepository;
 import org.springframework.http.HttpStatus;
@@ -33,5 +34,11 @@ public class CardService {
         if(transactionRequest.getAmount().compareTo(card.getAvailableLimit()) > 0 ) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Limit not available");
         }
+    }
+
+    public void updateLimit(Transaction transaction) {
+        Card card = transaction.getCard();
+        var amount = transaction.getAmount();
+        card.updateLimit(amount);
     }
 }
