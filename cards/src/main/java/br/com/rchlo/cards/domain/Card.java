@@ -54,4 +54,20 @@ public class Card {
     public void updateLimit(BigDecimal amount) {
         this.availableLimit = this.availableLimit.subtract(amount);
     }
+
+    public String getNumber() {
+        return this.number;
+    }
+
+    public String getHolderName() {
+        return holderName;
+    }
+
+    public String getExpiration() {
+        return expiration;
+    }
+
+    public String getSecurityCode() {
+        return securityCode;
+    }
 }

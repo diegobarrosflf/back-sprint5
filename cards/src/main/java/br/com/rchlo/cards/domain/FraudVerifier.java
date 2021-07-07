@@ -18,6 +18,15 @@ public class FraudVerifier {
         TOO_FAST;
     }
 
+    public FraudVerifier () {
+
+    }
+
+    public FraudVerifier(Type type, boolean enabled) {
+        this.type = type;
+        this.enabled = enabled;
+    }
+
     public Type getType() {
         return type;
     }
