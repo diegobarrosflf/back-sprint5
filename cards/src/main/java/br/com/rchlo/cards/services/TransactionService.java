@@ -29,10 +29,10 @@ public class TransactionService {
         transactionRepository.save(transaction);
     }
 
-    public Transaction findById(String uuid) {
-        long id = Long.parseLong(uuid);
-        return transactionRepository.findById(id).orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
+    public Transaction findByUuid(String uuid) {
+
+        return transactionRepository.findByUuid(uuid).orElseThrow( () -> new ResponseStatusException(HttpStatus.BAD_REQUEST));
+
     }
 
     public String creatNotification(Transaction transaction, Configuration freemarker) {

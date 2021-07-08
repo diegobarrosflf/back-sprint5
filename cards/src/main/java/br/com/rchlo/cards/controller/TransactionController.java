@@ -4,7 +4,6 @@ import br.com.rchlo.cards.domain.Card;
 import br.com.rchlo.cards.domain.Transaction;
 import br.com.rchlo.cards.dto.TransactionRequestDto;
 import br.com.rchlo.cards.dto.TransactionResponseDto;
-import br.com.rchlo.cards.repositories.CardRepository;
 import br.com.rchlo.cards.services.CardService;
 import br.com.rchlo.cards.services.FraudVerifierService;
 import br.com.rchlo.cards.services.TransactionService;
@@ -28,7 +27,6 @@ public class TransactionController {
     private final EntityManager entityManager;
     private final Configuration freemarker;
     private final MailSender mailSender;
-    private final CardRepository cardRepository;
     private final CardService cardService;
     private final FraudVerifierService fraudVerifierService;
     private final TransactionService transactionService;
@@ -36,14 +34,12 @@ public class TransactionController {
     public TransactionController(EntityManager entityManager,
                                  Configuration freemarker,
                                  MailSender mailSender,
-                                 CardRepository cardRepository,
                                  CardService cardService,
                                  FraudVerifierService fraudVerifierService,
                                  TransactionService transactionService) {
         this.entityManager = entityManager;
         this.freemarker = freemarker;
         this.mailSender = mailSender;
-        this.cardRepository = cardRepository;
         this.cardService = cardService;
         this.fraudVerifierService = fraudVerifierService;
         this.transactionService = transactionService;
@@ -85,7 +81,7 @@ public class TransactionController {
     public ResponseEntity<Void> confirm(@PathVariable("uuid") String uuid) {
 
         //recuperar a transação pelo id
-        var transaction = transactionService.findById(uuid);
+        var transaction = transactionService.findByUuid(uuid);
 
         transaction.confirm();
 
