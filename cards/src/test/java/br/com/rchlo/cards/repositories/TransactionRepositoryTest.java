@@ -1,11 +1,12 @@
 package br.com.rchlo.cards.repositories;
 
-import br.com.rchlo.cards.builders.CardBuilder;
-import br.com.rchlo.cards.builders.CustomerBuilder;
-import br.com.rchlo.cards.builders.TransactionBuilder;
-import br.com.rchlo.cards.domain.Card;
-import br.com.rchlo.cards.domain.Customer;
-import br.com.rchlo.cards.domain.Transaction;
+import br.com.rchlo.cards.card.builder.CardBuilder;
+import br.com.rchlo.cards.customer.builder.CustomerBuilder;
+import br.com.rchlo.cards.transaction.builder.TransactionBuilder;
+import br.com.rchlo.cards.card.Card;
+import br.com.rchlo.cards.customer.Customer;
+import br.com.rchlo.cards.transaction.Transaction;
+import br.com.rchlo.cards.transaction.repository.TransactionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;

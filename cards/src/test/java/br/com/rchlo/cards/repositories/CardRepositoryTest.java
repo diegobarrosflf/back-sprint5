@@ -1,9 +1,10 @@
 package br.com.rchlo.cards.repositories;
 
-import br.com.rchlo.cards.builders.CardBuilder;
-import br.com.rchlo.cards.builders.CustomerBuilder;
-import br.com.rchlo.cards.domain.Card;
-import br.com.rchlo.cards.domain.Customer;
+import br.com.rchlo.cards.card.builder.CardBuilder;
+import br.com.rchlo.cards.card.repository.CardRepository;
+import br.com.rchlo.cards.customer.builder.CustomerBuilder;
+import br.com.rchlo.cards.card.Card;
+import br.com.rchlo.cards.customer.Customer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

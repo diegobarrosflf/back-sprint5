@@ -1,7 +1,8 @@
 package br.com.rchlo.cards.repositories;
 
-import br.com.rchlo.cards.builders.FraudVerifierBuilder;
-import br.com.rchlo.cards.domain.FraudVerifier;
+import br.com.rchlo.cards.fraudVerifier.builder.FraudVerifierBuilder;
+import br.com.rchlo.cards.fraudVerifier.FraudVerifier;
+import br.com.rchlo.cards.fraudVerifier.repository.FraudVerifierRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
